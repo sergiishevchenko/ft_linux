@@ -1,0 +1,15 @@
+sources/*.tar.*
+sources/*.tgz
+sources/*.patch
+*.vdi
+*.vmdk
+*.vhd
+*.qcow2
+*.img
+*.iso
+build/
+*.o
+*.a
+*.so
+.DS_Store
+Thumbs.db
