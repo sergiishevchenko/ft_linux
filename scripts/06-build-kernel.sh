@@ -40,6 +40,9 @@ make mrproper
 log "Starting menuconfig..."
 make menuconfig
 
+log "Setting LOCALVERSION to -${STUDENT_LOGIN}..."
+sed -i "s|^CONFIG_LOCALVERSION=.*|CONFIG_LOCALVERSION=\"-${STUDENT_LOGIN}\"|" .config
+
 log "Building kernel..."
 make $MAKEFLAGS
 
