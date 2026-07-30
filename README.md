@@ -30,28 +30,30 @@ Acl, Attr, Autoconf, Automake, Bash, Bc, Binutils, Bison, Bzip2, Check, Coreutil
 ```
 .
 ├── PLAN.md                     # Build plan with full checklist
+├── docs/                       # Technical documentation
 ├── sources/
 │   ├── wget-list.txt           # 90 package URLs
 │   ├── md5sums.txt             # Checksums
 │   └── download.sh             # Download + verify
 ├── configs/
-│   ├── fstab                   # Partition mount table
-│   ├── grub.cfg                # Bootloader config
+│   ├── fstab / grub.cfg        # Mount table + bootloader
 │   ├── hostname / hosts        # Network identity
-│   ├── resolv.conf             # DNS
-│   ├── locale.conf / profile   # Environment
-│   ├── inputrc                 # Readline bindings
-│   ├── shells                  # Valid login shells
-│   └── inittab                 # SysVinit runlevels
+│   ├── ifconfig.eth0[.dhcp]    # Network interface
+│   └── ...                     # locale, profile, inittab, etc.
 └── scripts/
-    ├── 00-check-host.sh        # Verify host prerequisites
-    ├── 01-prepare-disk.sh      # Partition + format + mount
-    ├── 02-toolchain-cross.sh   # Cross-compiler (Binutils, GCC, Glibc)
-    ├── 03-toolchain-temp.sh    # Temporary tools (15 packages)
-    ├── 04-chroot-setup.sh      # FHS dirs + virtual FS + chroot
-    ├── 06-build-kernel.sh      # Kernel build + install
-    ├── 07-configure-grub.sh    # GRUB install + config
-    └── 08-final-checks.sh      # Validate ALL project requirements
+    ├── lib.sh                  # Shared helpers
+    ├── setup-lfs-user.sh       # Create lfs user + env
+    ├── apply-configs.sh        # Deploy configs with login
+    ├── 00-check-host.sh
+    ├── 01-prepare-disk.sh
+    ├── 02-toolchain-cross.sh
+    ├── 03-toolchain-temp.sh
+    ├── 04-chroot-setup.sh
+    ├── 05-build-system.sh      # LFS Ch.8–9 packages
+    ├── 06-build-kernel.sh
+    ├── 07-configure-grub.sh
+    ├── 08-final-checks.sh
+    └── 09-umount-and-reboot.sh
 ```
 
 ## Quick start
@@ -66,26 +68,36 @@ bash sources/download.sh
 # 3. Prepare disk (as root, inside VM)
 bash scripts/01-prepare-disk.sh /dev/sda
 
-# 4. Build cross-toolchain (as user 'lfs')
-bash scripts/02-toolchain-cross.sh
+# 4. Create lfs user
+bash scripts/setup-lfs-user.sh
 
-# 5. Build temporary tools
+# 5. Build cross-toolchain (as user 'lfs')
+su - lfs
+bash scripts/02-toolchain-cross.sh
 bash scripts/03-toolchain-temp.sh
+exit
 
 # 6. Setup and enter chroot (as root)
 bash scripts/04-chroot-setup.sh
+chroot "$LFS" /usr/bin/env -i HOME=/root TERM="$TERM" \
+  PS1='(lfs) \u:\w\$ ' PATH=/usr/bin:/usr/sbin MAKEFLAGS="-j$(nproc)" \
+  /bin/bash --login
 
 # 7. Build all system packages inside chroot
-#    (follow LFS book chapters 8-9)
+bash scripts/05-build-system.sh
 
-# 8. Build kernel
+# 8. Apply configs + build kernel + GRUB
+bash scripts/apply-configs.sh <student_login> /
 bash scripts/06-build-kernel.sh <student_login>
-
-# 9. Configure GRUB
 bash scripts/07-configure-grub.sh <student_login>
+exit
 
-# 10. Reboot and validate
-bash scripts/08-final-checks.sh
+# 9. Unmount and reboot
+bash scripts/09-umount-and-reboot.sh
+reboot
+
+# 10. Validate on booted system
+bash scripts/08-final-checks.sh <student_login>
 ```
 
 ## Requirements
