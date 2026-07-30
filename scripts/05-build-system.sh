@@ -831,6 +831,22 @@ build_libpipeline() {
     pkg_end "libpipeline"
 }
 
+build_man_db() {
+    pkg_begin "man-db" || return 0
+    extract_src "man-db-*"
+    enter_src "man-db"
+    ./configure --prefix=/usr --docdir=/usr/share/doc/man-db \
+        --sysconfdir=/etc --disable-setuid \
+        --enable-cache-owner=bin \
+        --with-browser=/usr/bin/lynx \
+        --with-vgrind=/usr/bin/vgrind \
+        --with-grap=/usr/bin/grap
+    make $MAKEFLAGS
+    make install
+    clean_src "man-db"
+    pkg_end "man-db"
+}
+
 build_make() { standard_build "make"; }
 build_patch() { standard_build "patch"; }
 
@@ -928,14 +944,57 @@ build_procps() {
 
 build_eudev() {
     pkg_begin "eudev" || return 0
+    extract_src "systemd-*"
+    enter_src "systemd"
+
+    sed -i -e 's/want_tests : true/want_tests : false/' units/meson.build
+    sed -i -e 's/test_efi_create_disk_image = true/test_efi_create_disk_image = false/' test/meson.build || true
+
+    mkdir -p build && cd build
+    meson setup .. \
+        --prefix=/usr --buildtype=release \
+        -Dmode=release -Ddev-kvm-mode=0660 \
+        -Dlink-udev-shared=false \
+        -Dlogind=false -Dvconsole=false
+
+    udev_helpers=$(grep "'name' :" ../src/udev/meson.build | \
+                   awk '{print $3}' | tr -d ",'" | grep -v 'udevadm')
+
+    ninja udevadm systemd-hwdb \
+        $(ninja -n | grep -Eo '(libsystemd|libudev)[^ ]*') \
+        $(ninja -n | grep -Eo 'rules.d/[^ ]*') \
+        $(ninja -n | grep -Eo 'man/[^ ]*') \
+        $(ninja -n | grep -Eo 'src/libudev/[^ ]*') \
+        $udev_helpers
+
+    install -vm755 -d {/usr/lib,/etc}/udev/{hwdb.d,rules.d,network}
+    install -vm755 -d /usr/{lib,share}/pkgconfig
+    install -vm755 udevadm                       /usr/bin/
+    install -vm755 systemd-hwdb                  /usr/bin/systemd-hwdb
+    ln -svfn ../bin/udevadm /usr/sbin/udevd
+    cp -av libudev.so{,*[0-9]} /usr/lib/
+    install -vm644 ../src/libudev/libudev.h       /usr/include/
+    install -vm644 src/libudev/*.pc               /usr/lib/pkgconfig/
+    install -vm644 src/udev/*.pc                  /usr/share/pkgconfig/
+    install -vm644 ../src/udev/udev.conf          /etc/udev/
+    install -vm644 rules.d/* ../rules.d/*.rules   /usr/lib/udev/rules.d/
+    install -vm755 $udev_helpers                  /usr/lib/udev/
+
+    for f in man/*.5 man/*.7 man/*.8; do
+        [ -f "$f" ] && install -vm644 "$f" "/usr/share/man/man${f##*.}/" 2>/dev/null || true
+    done
+
+    cd "$SOURCES"
+    rm -rf systemd-*/
+
     if ls "$SOURCES"/udev-lfs-*.tar.xz >/dev/null 2>&1; then
         extract_src "udev-lfs-*"
         enter_src "udev-lfs"
-        make install || true
+        make -f udev-lfs-*.rules install 2>/dev/null || make install || true
         clean_src "udev-lfs"
     fi
-    warn "Complete eudev/udev install per LFS Ch.8 (systemd udev + udev-lfs)."
-    warn "See: https://www.linuxfromscratch.org/lfs/view/stable/chapter08/udev.html"
+
+    udevadm hwdb --update
     pkg_end "eudev"
 }
 
@@ -968,6 +1027,17 @@ build_tzdata() {
     pkg_end "tzdata"
 }
 
+build_wget() {
+    pkg_begin "wget" || return 0
+    extract_src "wget-*"
+    enter_src "wget"
+    ./configure --prefix=/usr --sysconfdir=/etc --with-ssl=openssl
+    make $MAKEFLAGS
+    make install
+    clean_src "wget"
+    pkg_end "wget"
+}
+
 PACKAGES=(
     man-pages iana-etc glibc zlib bzip2 xz zstd file readline m4 bc flex
     tcl expect dejagnu pkgconf binutils gmp mpfr mpc attr acl libcap libxcrypt
@@ -975,8 +1045,8 @@ PACKAGES=(
     expat inetutils less perl XML-Parser intltool autoconf automake openssl
     kmod elfutils libffi Python flit_core wheel setuptools ninja meson
     coreutils check diffutils gawk findutils groff grub gzip iproute2 kbd
-    libpipeline make patch tar texinfo vim util-linux e2fsprogs sysklogd
-    sysvinit procps-ng eudev lfs-bootscripts tzdata
+    libpipeline man-db make patch tar texinfo vim util-linux e2fsprogs sysklogd
+    sysvinit procps-ng eudev lfs-bootscripts tzdata wget
 )
 
 if [ "$LIST_ONLY" -eq 1 ]; then
@@ -1003,6 +1073,7 @@ for pkg in "${PACKAGES[@]}"; do
         iana-etc)   fn="build_iana_etc" ;;
         libxcrypt)  fn="build_libxcrypt" ;;
         libpipeline) fn="build_libpipeline" ;;
+        man-db)     fn="build_man_db" ;;
         util-linux) fn="build_util_linux" ;;
         e2fsprogs)  fn="build_e2fsprogs" ;;
         iproute2)   fn="build_iproute2" ;;
