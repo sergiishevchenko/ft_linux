@@ -1,8 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# Cross-Toolchain (LFS Ch.5). Run as user 'lfs' with $LFS set.
-
 LFS="${LFS:-/mnt/lfs}"
 LFS_TGT="$(uname -m)-lfs-linux-gnu"
 MAKEFLAGS="-j$(nproc)"

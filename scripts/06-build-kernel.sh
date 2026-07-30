@@ -1,8 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# Run INSIDE chroot. Usage: ./06-build-kernel.sh <student_login>
-
 STUDENT_LOGIN="${1:?Usage: $0 <student_login>}"
 MAKEFLAGS="-j$(nproc)"
 
@@ -36,8 +34,6 @@ cd "$KERNEL_SRC"
 
 make mrproper
 
-# In menuconfig set: General Setup -> Local version = -<student_login>
-# Enable: loadable modules, devtmpfs, ext4, proc, sysfs, tmpfs, TCP/IP, VM NIC driver
 log "Starting menuconfig..."
 make menuconfig
 

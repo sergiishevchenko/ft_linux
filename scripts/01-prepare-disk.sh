@@ -1,8 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# Run as root. Will ask for confirmation before writing.
-
 DISK="${1:-/dev/sda}"
 LFS="${LFS:-/mnt/lfs}"
 

@@ -1,8 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# Chroot setup (LFS Ch.7). Run as ROOT.
-
 LFS="${LFS:-/mnt/lfs}"
 
 RED='\033[0;31m'
