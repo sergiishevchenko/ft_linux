@@ -18,7 +18,7 @@ make $MAKEFLAGS && make DESTDIR="$LFS" install
 cd "$SOURCES" && rm -rf m4-*/
 
 log "========== Ncurses =========="
-cd "$SOURCES" && tar -xf ncurses-*.tgz && cd ncurses-*/
+cd "$SOURCES" && tar -xf ncurses-*.tar.* && cd ncurses-*/
 sed -i s/mawk// configure
 mkdir build && pushd build
   ../configure
