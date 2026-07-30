@@ -1,8 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# Run INSIDE chroot. Usage: ./07-configure-grub.sh <student_login> [disk] [root_part]
-
 STUDENT_LOGIN="${1:?Usage: $0 <student_login>}"
 BOOT_DISK="${2:-/dev/sda}"
 ROOT_PART="${3:-/dev/sda2}"
