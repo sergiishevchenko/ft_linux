@@ -44,7 +44,7 @@ echo ""
 echo "--- Kernel ---"
 KVER=$(uname -r)
 check "Kernel version >= 4.0" "$(echo "$KVER" | awk -F. '{print ($1 >= 4) ? 0 : 1}')"
-check "Kernel contains student login ($STUDENT_LOGIN)" "$(echo "$KVER" | grep -qc "$STUDENT_LOGIN"; echo $((1 - $?)))"
+check "Kernel contains student login ($STUDENT_LOGIN)" "$(echo "$KVER" | grep -q "$STUDENT_LOGIN"; echo $?)"
 check "Kernel sources in /usr/src/kernel-*" "$(ls -d /usr/src/kernel-* &>/dev/null; echo $?)"
 
 KFILE=$(ls /boot/vmlinuz-*-"${STUDENT_LOGIN}" 2>/dev/null | head -1)
@@ -56,9 +56,9 @@ fi
 
 echo ""
 echo "--- Partitions ---"
-check "/boot is a separate partition" "$(mount | grep -qc '/boot '; echo $((1 - $?)))"
-check "swap is active" "$(swapon --show 2>/dev/null | grep -qc 'partition\|/dev'; echo $((1 - $?)))"
-check "root (/) is mounted" "$(mount | grep -qc 'on / '; echo $((1 - $?)))"
+check "/boot is a separate partition" "$(mount | grep -q '/boot ' && echo 0 || echo 1)"
+check "swap is active" "$(swapon --show 2>/dev/null | grep -q 'partition\|/dev' && echo 0 || echo 1)"
+check "root (/) is mounted" "$(mount | grep -q 'on / ' && echo 0 || echo 1)"
 
 echo ""
 echo "--- Hostname ---"
@@ -80,8 +80,8 @@ check "udevd is running" "$(pidof udevd systemd-udevd &>/dev/null; echo $?)"
 
 echo ""
 echo "--- Networking ---"
-check "Network interface UP" "$(ip link show | grep -qc 'state UP'; echo $((1 - $?)))"
-check "Has IP address" "$(ip -4 addr show | grep -qc 'inet '; echo $((1 - $?)))"
+check "Network interface UP" "$(ip link show | grep -q 'state UP' && echo 0 || echo 1)"
+check "Has IP address" "$(ip -4 addr show | grep -q 'inet ' && echo 0 || echo 1)"
 check "Internet connectivity" "$(ping -c1 -W3 8.8.8.8 &>/dev/null; echo $?)"
 check "DNS resolution" "$(ping -c1 -W3 google.com &>/dev/null; echo $?)"
 
