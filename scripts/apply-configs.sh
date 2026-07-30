@@ -6,7 +6,12 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 source "$SCRIPT_DIR/lib.sh"
 
-STUDENT_LOGIN="${1:?Usage: $0 <student_login> [target_root]}"
+DEFAULT_LOGIN="sshevche"
+if [ -f "$REPO_ROOT/LOGIN" ]; then
+    DEFAULT_LOGIN="$(tr -d '[:space:]' < "$REPO_ROOT/LOGIN")"
+fi
+
+STUDENT_LOGIN="${1:-$DEFAULT_LOGIN}"
 TARGET_ROOT="${2:-${LFS:-/mnt/lfs}}"
 CONFIGS="$REPO_ROOT/configs"
 LINUX_VERSION="${LINUX_VERSION:-6.16.1}"

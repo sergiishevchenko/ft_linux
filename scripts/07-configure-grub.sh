@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-STUDENT_LOGIN="${1:?Usage: $0 <student_login>}"
+STUDENT_LOGIN="${1:-sshevche}"
 BOOT_DISK="${2:-/dev/sda}"
 ROOT_PART="${3:-/dev/sda2}"
 

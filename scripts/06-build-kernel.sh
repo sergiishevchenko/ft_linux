@@ -1,7 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
-STUDENT_LOGIN="${1:?Usage: $0 <student_login>}"
+# Run INSIDE chroot. Usage: ./06-build-kernel.sh [student_login]
+# Default login: sshevche
+
+STUDENT_LOGIN="${1:-sshevche}"
 MAKEFLAGS="-j$(nproc)"
 
 GREEN='\033[0;32m'

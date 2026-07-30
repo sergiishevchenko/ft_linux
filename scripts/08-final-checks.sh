@@ -33,7 +33,7 @@ check_warn() {
     fi
 }
 
-STUDENT_LOGIN="${1:-$(hostname)}"
+STUDENT_LOGIN="${1:-sshevche}"
 
 echo "============================================"
 echo "  ft_linux Final Validation"
